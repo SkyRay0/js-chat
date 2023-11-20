@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
+    <div id="message-container" class="container-fluid-xl" style="overflow-y: scroll; min-height: 700px;"></div>
+
+    <form id="message-form" class="row">
+        <div class="col-sm-10 ">
+            <input type="text" class="form-control" id="message-input" placeholder="Введите ваше сообщение..." aria-label="message-input">
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary mb-3">Отправить</button>
+        </div>
+    </form>
+
+    <form id="username-form" class="row">
+        <div class="col-auto">
+            <input type="text" class="form-control" id="username-input" placeholder="Введите ник..." aria-label="username-input">
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary mb-3">Установить</button>
+        </div>
+    </form>
+
+    <script>
+        var socket = io();
+
+        var messageForm;
+        var messageInput;
+
+        var messageContainer;
+        var currentMessagesHistory = '';
+
+        var usernameForm;
+        var usernameInput;
+        var username;
+
+        window.onload = function () {
+            messageForm = document.getElementById('message-form');
+            messageInput = document.getElementById('message-input');
+
+            messageContainer = document.getElementById('message-container');
+
+            usernameForm = document.getElementById('username-form');
+            usernameInput = document.getElementById('username-input');
+
+            usernameForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                if (usernameInput) {
+                    socket.emit('username set', usernameInput.value);
+                    username = usernameInput.value;
+                    usernameInput.value = '';
+                }
+            })
+
+            messageForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                if (messageInput) {
+                    socket.emit('chat message', messageInput.value);
+                    messageInput.value = '';
+                }
+            })
+        };
+
+        socket.on('username accepted', (msg) => {
+            usernameInput.placeholder = username;
+        })
+
+        socket.on('user connected', (msg) => {
+            currentMessagesHistory += msg + '\n';
+            messageContainer.innerHTML = currentMessagesHistory;
+        })
+
+        socket.on('chat message', (msg) => {
+            currentMessagesHistory += msg + '\n';
+            messageContainer.innerHTML = currentMessagesHistory;
+        })
+
+        socket.on('error', (msg) => {
+            if (msg === 'username not set') {
+                alert('Установите имя пользователя, прежде чем начать пользоваться чатом.')
+            }
+        })
+
+        socket.on('user disconnected', (msg) => {
+            currentMessagesHistory += msg + '\n';
+            messageContainer.innerHTML = currentMessagesHistory;
+        })
+    </script>
+</body>
+</html>
